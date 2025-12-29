@@ -211,6 +211,75 @@
             font-size: 0.8rem;
             color: var(--text-muted);
         }
+        /* --- Paste this at the bottom of your CSS --- */
+
+/* Mobile "App-Like" View */
+@media (max-width: 768px) {
+    .container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Sidebar takes full screen on mobile */
+    .sidebar {
+        width: 100%;
+        height: calc(100vh - 70px);
+        position: absolute;
+        z-index: 10;
+        transition: transform 0.3s ease-in-out;
+        transform: translateX(0); /* Visible by default */
+        border-right: none;
+    }
+
+    /* Content Area takes full screen on mobile but is hidden initially */
+    .content-area {
+        width: 100%;
+        height: calc(100vh - 70px);
+        position: absolute;
+        z-index: 20;
+        top: 0;
+        left: 0;
+        transform: translateX(100%); /* Hidden to the right by default */
+        transition: transform 0.3s ease-in-out;
+        padding: 20px;
+        background: var(--bg-dark); /* Solid background to cover list */
+    }
+
+    /* Active State: When reading an answer */
+    body.reading-mode .sidebar {
+        transform: translateX(-100%); /* Move list to left */
+    }
+    body.reading-mode .content-area {
+        transform: translateX(0); /* Bring answer to center */
+    }
+
+    /* Back Button Styling */
+    .back-btn {
+        display: flex !important; /* Visible only on mobile */
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        background: #334155;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    /* Adjust fonts for phone */
+    .welcome-content h1 { font-size: 2rem; }
+    .answer-card h2 { font-size: 1.5rem; }
+    header { padding: 0 1rem; }
+    .logo { font-size: 1.2rem; }
+    .toggle-container span { font-size: 0.8rem; }
+}
+
+/* Hide back button on desktop */
+.back-btn {
+    display: none;
+}
 
     </style>
 </head>
@@ -254,14 +323,19 @@
         </div>
 
         <div class="content-area">
-            <div id="empty-state">
-                <div style="font-size: 4rem; margin-bottom: 20px;">🚀</div>
-                <h2>Select a question from the left</h2>
-                <p>Click on a question to reveal the guided answer.</p>
-            </div>
-            <div id="answer-display" class="answer-card">
-                </div>
+    <button class="back-btn" onclick="goBack()">
+        ← Back to Questions
+    </button>
+
+    <div id="empty-state">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🚀</div>
+        <h2>Select a question</h2>
+        <p>Tap a question to reveal the answer.</p>
+    </div>
+    
+    <div id="answer-display" class="answer-card">
         </div>
+</div>
     </div>
 
 <script>
@@ -3188,25 +3262,39 @@
         });
     }
 
+    // --- Add/Replace these functions in your script ---
+
     function loadQuestion(id, liElement) {
-        // Mark active
+        // 1. Mark active in UI
         document.querySelectorAll('.question-item').forEach(el => el.classList.remove('active'));
         if(liElement) liElement.classList.add('active');
 
-        // Logic
+        // 2. Fetch Data
         currentQuestion = questionsDB.find(q => q.id === id);
         updateContent();
         
-        // Progress Logic
+        // 3. Progress Logic
         if(!viewedQuestions.has(id)) {
             viewedQuestions.add(id);
             if(liElement) liElement.classList.add('completed');
             updateProgress();
         }
 
-        // Show card
+        // 4. UI Display Logic
         document.getElementById('empty-state').style.display = 'none';
         document.getElementById('answer-display').style.display = 'block';
+
+        // 5. MOBILE SPECIFIC: Switch to reading mode
+        document.body.classList.add('reading-mode');
+        
+        // Auto-scroll to top of content
+        document.querySelector('.content-area').scrollTop = 0;
+    }
+
+    // New Function for the Back Button
+    function goBack() {
+        // Remove the class to slide the answer away and show the list
+        document.body.classList.remove('reading-mode');
     }
 
     function updateContent() {
